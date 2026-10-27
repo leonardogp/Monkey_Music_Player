@@ -1,8 +1,12 @@
 package com.lg.monkeymusicplayer.ui.components.player
 
+import android.Manifest
 import android.graphics.drawable.BitmapDrawable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -25,7 +29,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -43,12 +49,15 @@ import com.lg.monkeymusicplayer.R
 import com.lg.monkeymusicplayer.data.model.LyricLine
 import com.lg.monkeymusicplayer.data.model.Song
 import com.lg.monkeymusicplayer.ui.PlayerState
+import com.lg.monkeymusicplayer.ui.components.AudioVisualizer
 import com.lg.monkeymusicplayer.ui.components.LyricsView
 import com.lg.monkeymusicplayer.ui.components.MediaProgressSlider
 import com.lg.monkeymusicplayer.ui.components.core.PlaybackWaveform
 import com.lg.monkeymusicplayer.ui.components.dialogs.EditTagsDialog
+import com.lg.monkeymusicplayer.ui.theme.PrimaryOrange
 import com.lg.monkeymusicplayer.ui.theme.dynamic.BitmapColorEngine
 import com.lg.monkeymusicplayer.ui.theme.dynamic.LocalDynamicPlayerColors
+import com.lg.monkeymusicplayer.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,6 +97,15 @@ fun FullPlayerScreen(
     val defaultColors = LocalDynamicPlayerColors.current
     var extractedColors by remember(song.id, song.albumArtUri) { mutableStateOf(defaultColors) }
 
+    var isVisualizerEnabled by remember { mutableStateOf(false) }
+    val recordAudioLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            isVisualizerEnabled = true
+        }
+    }
+
     LaunchedEffect(song.albumArtUri) {
         val uri = song.albumArtUri
         if (!uri.isNullOrBlank()) {
@@ -120,33 +138,33 @@ fun FullPlayerScreen(
 
         val animatedBgDark by animateColorAsState(
             targetValue = dynamicColors.backgroundDark,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "bg_dark"
         )
         val animatedDark by animateColorAsState(
             targetValue = dynamicColors.dark,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "dark"
         )
         val animatedBg by animateColorAsState(
             targetValue = dynamicColors.background,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "bg"
         )
         val animatedAccent by animateColorAsState(
             targetValue = dynamicColors.accent,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "accent"
-        )
-        val animatedWaveform by animateColorAsState(
-            targetValue = dynamicColors.waveform,
-            animationSpec = tween(durationMillis = 600),
-            label = "waveform"
         )
         val animatedTextPrimary by animateColorAsState(
             targetValue = dynamicColors.textPrimary,
-            animationSpec = tween(durationMillis = 600),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "text_primary"
+        )
+        val animatedGlow by animateColorAsState(
+            targetValue = dynamicColors.vibrant.copy(alpha = 0.22f),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+            label = "glow"
         )
 
         LaunchedEffect(Unit) {
@@ -187,6 +205,15 @@ fun FullPlayerScreen(
                             )
                         )
                     )
+                    .drawBehind {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(animatedGlow, Color.Transparent),
+                                center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height * 0.32f),
+                                radius = size.width * 0.85f
+                            )
+                        )
+                    }
                     .systemBarsPadding()
             ) {
                 // ── TopBar: flecha abajo | PLAYLIST / nombre | (vacío) ────────────
@@ -350,10 +377,38 @@ fun FullPlayerScreen(
 
                             Spacer(Modifier.height(18.dp))
 
-                            PlaybackWaveform(
-                                isPlaying = playerState.isPlaying,
-                                accent = animatedWaveform
-                            )
+                            val showRealVisualizer = isVisualizerEnabled && PermissionHelper.hasRecordAudioPermission(context) && playerState.audioSessionId > 0
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .clickable {
+                                        val hasPerm = PermissionHelper.hasRecordAudioPermission(context)
+                                        if (!isVisualizerEnabled) {
+                                            if (hasPerm) {
+                                                isVisualizerEnabled = true
+                                            } else {
+                                                recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                            }
+                                        } else {
+                                            isVisualizerEnabled = false
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (showRealVisualizer) {
+                                    AudioVisualizer(
+                                        audioSessionId = playerState.audioSessionId,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    PlaybackWaveform(
+                                        isPlaying = playerState.isPlaying,
+                                        accent = PrimaryOrange
+                                    )
+                                }
+                            }
 
                             Spacer(Modifier.height(18.dp))
 
@@ -508,7 +563,7 @@ fun FullPlayerScreen(
                                             )
                                         }
                                     },
-                                    colors = ListItemDefaults.colors(containerColor = animatedBgDark),
+                                    colors = ListItemDefaults.colors(containerColor = dynamicColors.backgroundDark),
                                     modifier = Modifier.clickable { onPlayFromQueue(queueSong) }
                                 )
                                 HorizontalDivider(color = dynamicColors.controls.copy(alpha = 0.20f))

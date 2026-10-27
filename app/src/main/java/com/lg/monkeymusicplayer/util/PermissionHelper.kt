@@ -91,4 +91,12 @@ object PermissionHelper {
             emptyArray()
         }
     }
+
+    fun hasRecordAudioPermission(context: Context): Boolean {
+        return hasPermission(context, Manifest.permission.RECORD_AUDIO)
+    }
+
+    fun getRecordAudioPermission(): Array<String> {
+        return arrayOf(Manifest.permission.RECORD_AUDIO)
+    }
 }

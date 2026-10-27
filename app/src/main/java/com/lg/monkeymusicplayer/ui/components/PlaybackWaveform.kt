@@ -13,13 +13,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.lg.monkeymusicplayer.ui.theme.PrimaryOrange
 import kotlin.random.Random
 
 @Composable
 fun PlaybackWaveform(
     isPlaying: Boolean,
-    accent: Color,
     modifier: Modifier = Modifier,
+    accent: Color = PrimaryOrange,
     barCount: Int = 32
 ) {
     val transition = rememberInfiniteTransition(label = "waveform")
