@@ -32,6 +32,15 @@ import com.lg.monkeymusicplayer.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer
 
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 @Composable
 fun MonkeyPlayerBottomBar(
     playerState: PlayerState,
@@ -41,11 +50,48 @@ fun MonkeyPlayerBottomBar(
 ) {
     val song: Song? = playerState.currentSong ?: playerState.lastPlayedSong
     if (song == null) return
+
+    val density = LocalDensity.current
+    val thresholdPx = remember(density) { with(density) { 24.dp.toPx() } }
+    var totalDragY by remember { mutableFloatStateOf(0f) }
+    var totalDragX by remember { mutableFloatStateOf(0f) }
+    var hasTriggered by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .height(78.dp)
+            .pointerInput(onClick) {
+                detectDragGestures(
+                    onDragStart = {
+                        totalDragY = 0f
+                        totalDragX = 0f
+                        hasTriggered = false
+                    },
+                    onDragEnd = {
+                        totalDragY = 0f
+                        totalDragX = 0f
+                        hasTriggered = false
+                    },
+                    onDragCancel = {
+                        totalDragY = 0f
+                        totalDragX = 0f
+                        hasTriggered = false
+                    },
+                    onDrag = { change, dragAmount ->
+                        totalDragY += dragAmount.y
+                        totalDragX += dragAmount.x
+                        if (kotlin.math.abs(totalDragY) > kotlin.math.abs(totalDragX)) {
+                            if (totalDragY <= -thresholdPx && !hasTriggered) {
+                                hasTriggered = true
+                                change.consume()
+                                onClick()
+                            }
+                        }
+                    }
+                )
+            }
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),

@@ -16,6 +16,7 @@ import com.lg.monkeymusicplayer.data.database.HistoryEntity
 import com.lg.monkeymusicplayer.data.database.MusicDao
 import com.lg.monkeymusicplayer.data.database.PlaylistEntity
 import com.lg.monkeymusicplayer.data.database.PlaylistSongCrossRef
+import com.lg.monkeymusicplayer.data.database.PlaylistWithCount
 import com.lg.monkeymusicplayer.data.database.SongEntity
 import com.lg.monkeymusicplayer.data.model.Song
 import com.mpatric.mp3agic.ID3v24Tag
@@ -43,6 +44,7 @@ class MusicRepository(
     val favorites: Flow<List<Long>> = musicDao.getFavorites()
     val history: Flow<List<HistoryEntity>> = musicDao.getHistory()
     val playlists: Flow<List<PlaylistEntity>> = musicDao.getPlaylists()
+    val playlistsWithCount: Flow<List<PlaylistWithCount>> = musicDao.getPlaylistsWithCount()
 
     suspend fun getSongs(): List<Song> = withContext(Dispatchers.IO) {
         musicDao.getAllSongs().map { it.toDomainModel() }

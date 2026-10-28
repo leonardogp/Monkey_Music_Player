@@ -61,6 +61,10 @@ import com.lg.monkeymusicplayer.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.mutableFloatStateOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +96,43 @@ fun FullPlayerScreen(
     val pagerState = rememberPagerState(pageCount = { tabLabels.size })
     val scope = rememberCoroutineScope()
     var playerVisible by remember { mutableStateOf(false) }
+
+    val density = LocalDensity.current
+    val dismissThresholdPx = remember(density) { with(density) { 28.dp.toPx() } }
+    var dismissDragY by remember { mutableFloatStateOf(0f) }
+    var dismissDragX by remember { mutableFloatStateOf(0f) }
+    var hasDismissTriggered by remember { mutableStateOf(false) }
+
+    val dismissGestureModifier = Modifier.pointerInput(onClose) {
+        detectDragGestures(
+            onDragStart = {
+                dismissDragY = 0f
+                dismissDragX = 0f
+                hasDismissTriggered = false
+            },
+            onDragEnd = {
+                dismissDragY = 0f
+                dismissDragX = 0f
+                hasDismissTriggered = false
+            },
+            onDragCancel = {
+                dismissDragY = 0f
+                dismissDragX = 0f
+                hasDismissTriggered = false
+            },
+            onDrag = { change, dragAmount ->
+                dismissDragY += dragAmount.y
+                dismissDragX += dragAmount.x
+                if (kotlin.math.abs(dismissDragY) > kotlin.math.abs(dismissDragX)) {
+                    if (dismissDragY >= dismissThresholdPx && !hasDismissTriggered) {
+                        hasDismissTriggered = true
+                        change.consume()
+                        onClose()
+                    }
+                }
+            }
+        )
+    }
 
     val context = LocalContext.current
     val defaultColors = LocalDynamicPlayerColors.current
@@ -187,11 +228,13 @@ fun FullPlayerScreen(
         AnimatedVisibility(
             visible = playerVisible,
             enter = slideInVertically(
-                initialOffsetY = { fullHeight -> fullHeight }
-            ) + fadeIn(),
+                initialOffsetY = { fullHeight -> fullHeight },
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+            ) + fadeIn(animationSpec = tween(durationMillis = 200)),
             exit = slideOutVertically(
-                targetOffsetY = { fullHeight -> fullHeight }
-            ) + fadeOut()
+                targetOffsetY = { fullHeight -> fullHeight },
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+            ) + fadeOut(animationSpec = tween(durationMillis = 200))
         ) {
             Column(
                 modifier = Modifier
@@ -220,6 +263,7 @@ fun FullPlayerScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .then(dismissGestureModifier)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     IconButton(onClick = onClose, modifier = Modifier.align(Alignment.CenterStart)) {
@@ -292,6 +336,7 @@ fun FullPlayerScreen(
                         0 -> Column(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .then(dismissGestureModifier)
                                 .background(
                                     Brush.verticalGradient(
                                         listOf(

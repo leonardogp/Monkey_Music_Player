@@ -177,6 +177,7 @@
     <string name="stats_top_songs">Top Canciones</string>
     <string name="stats_top_artists">Top Artistas</string>
     <string name="stats_artist_songs">%d canciones</string>
+    <string name="song_singular" translatable="false">1 canción</string>
     <string name="stats_empty_title">Sin estadísticas aún</string>
     <string name="stats_empty_body">Escucha algo de música y tu historial aparecerá aquí</string>
     <string name="stats_menu_item">Mis Estadísticas</string>

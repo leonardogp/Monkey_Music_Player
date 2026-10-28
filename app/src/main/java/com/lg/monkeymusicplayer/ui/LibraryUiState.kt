@@ -1,7 +1,7 @@
 package com.lg.monkeymusicplayer.ui
 
 import com.lg.monkeymusicplayer.data.database.HistoryEntity
-import com.lg.monkeymusicplayer.data.database.PlaylistEntity
+import com.lg.monkeymusicplayer.data.database.PlaylistWithCount
 import com.lg.monkeymusicplayer.data.model.SmartPlaylist
 import com.lg.monkeymusicplayer.data.model.Song
 
@@ -20,7 +20,7 @@ data class LibraryUiState(
     val artists: Map<String, List<Song>> = emptyMap(),
     val albums: Map<String, List<Song>> = emptyMap(),
     val folders: Map<String, List<Song>> = emptyMap(),
-    val playlists: List<PlaylistEntity> = emptyList(),
+    val playlists: List<PlaylistWithCount> = emptyList(),
     val history: List<HistoryEntity> = emptyList(),
     val currentPlaylistSongs: List<Song> = emptyList(),
     val searchQuery: String = "",

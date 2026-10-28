@@ -38,15 +38,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.lg.monkeymusicplayer.R
 import com.lg.monkeymusicplayer.data.database.PlaylistEntity
+import com.lg.monkeymusicplayer.data.database.PlaylistWithCount
 import com.lg.monkeymusicplayer.data.model.SmartPlaylist
 import com.lg.monkeymusicplayer.data.model.SmartPlaylistType
 import com.lg.monkeymusicplayer.ui.components.dialogs.CreatePlaylistDialog
 
 @Composable
 fun PlaylistGrid(
-    playlists: List<PlaylistEntity>,
+    playlists: List<PlaylistWithCount>,
     smartPlaylists: List<SmartPlaylist>,
     onCreatePlaylist: (String) -> Unit,
     onPlaylistClick: (PlaylistEntity) -> Unit,
@@ -72,13 +75,23 @@ fun PlaylistGrid(
     ) {
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { showCreateDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clickable { showCreateDialog = true },
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(48.dp))
-                        Text(stringResource(com.lg.monkeymusicplayer.R.string.new_playlist), style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = stringResource(R.string.new_playlist),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -89,23 +102,51 @@ fun PlaylistGrid(
         }
 
         items(playlists) { playlist ->
-            PlaylistCard(playlist.name, stringResource(com.lg.monkeymusicplayer.R.string.playlist), onPlaylistClick = { onPlaylistClick(playlist) })
+            val subtitle = if (playlist.songCount == 1) {
+                stringResource(R.string.song_singular)
+            } else {
+                stringResource(R.string.stats_artist_songs, playlist.songCount)
+            }
+            PlaylistCard(
+                name = playlist.name,
+                subtitle = subtitle,
+                onPlaylistClick = { onPlaylistClick(PlaylistEntity(id = playlist.id, name = playlist.name)) }
+            )
         }
     }
 }
 
 @Composable
 fun PlaylistCard(name: String, subtitle: String, onPlaylistClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable(onClick = onPlaylistClick)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clickable(onClick = onPlaylistClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Icon(
                 Icons.Default.QueueMusic,
                 contentDescription = null,
-                modifier = Modifier.align(Alignment.Center).size(64.dp).alpha(0.1f)
+                modifier = Modifier.align(Alignment.Center).size(64.dp).alpha(0.12f)
             )
             Column(modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-                Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
@@ -114,9 +155,9 @@ fun PlaylistCard(name: String, subtitle: String, onPlaylistClick: () -> Unit) {
 @Composable
 private fun SmartPlaylistCard(smart: SmartPlaylist, onClick: () -> Unit) {
     val title = when (smart.type) {
-        SmartPlaylistType.DAILY_MIX -> stringResource(com.lg.monkeymusicplayer.R.string.smart_daily_mix_title)
-        SmartPlaylistType.REDISCOVER -> stringResource(com.lg.monkeymusicplayer.R.string.smart_rediscover_title)
-        SmartPlaylistType.TOP_SONGS -> stringResource(com.lg.monkeymusicplayer.R.string.smart_top_songs_title)
+        SmartPlaylistType.DAILY_MIX -> stringResource(R.string.smart_daily_mix_title)
+        SmartPlaylistType.REDISCOVER -> stringResource(R.string.smart_rediscover_title)
+        SmartPlaylistType.TOP_SONGS -> stringResource(R.string.smart_top_songs_title)
     }
     val icon = when (smart.type) {
         SmartPlaylistType.DAILY_MIX -> Icons.Default.AutoAwesome
@@ -136,9 +177,12 @@ private fun SmartPlaylistCard(smart: SmartPlaylist, onClick: () -> Unit) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Box(
             modifier = Modifier
@@ -152,11 +196,21 @@ private fun SmartPlaylistCard(smart: SmartPlaylist, onClick: () -> Unit) {
                 tint = Color.White
             )
             Column(modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
-                Text(stringResource(com.lg.monkeymusicplayer.R.string.stats_artist_songs, smart.songs.size),
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = stringResource(R.string.stats_artist_songs, smart.songs.size),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.8f))
+                    color = Color.White.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

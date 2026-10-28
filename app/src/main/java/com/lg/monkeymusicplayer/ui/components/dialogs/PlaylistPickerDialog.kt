@@ -22,13 +22,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lg.monkeymusicplayer.R
 import com.lg.monkeymusicplayer.data.database.PlaylistEntity
+import com.lg.monkeymusicplayer.data.database.PlaylistWithCount
 import com.lg.monkeymusicplayer.ui.theme.PrimaryOrange
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistPickerDialog(
-    playlists: List<PlaylistEntity>,
+    playlists: List<PlaylistWithCount>,
     onDismiss: () -> Unit,
     onPlaylistSelected: (PlaylistEntity) -> Unit,
     onCreatePlaylist: (String) -> Unit
@@ -47,27 +49,33 @@ fun PlaylistPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(com.lg.monkeymusicplayer.R.string.add_to_playlist)) },
+        title = { Text(stringResource(R.string.add_to_playlist)) },
         text = {
             LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
                 item {
                     ListItem(
                         modifier = Modifier.clickable { showCreateDialog = true },
-                        headlineContent = { Text(stringResource(com.lg.monkeymusicplayer.R.string.new_playlist), color = PrimaryOrange) },
+                        headlineContent = { Text(stringResource(R.string.new_playlist), color = PrimaryOrange) },
                         leadingContent = { Icon(Icons.Default.Add, contentDescription = null, tint = PrimaryOrange) }
                     )
                 }
                 items(playlists) { playlist ->
+                    val subtitle = if (playlist.songCount == 1) {
+                        stringResource(R.string.song_singular)
+                    } else {
+                        stringResource(R.string.stats_artist_songs, playlist.songCount)
+                    }
                     ListItem(
-                        modifier = Modifier.clickable { onPlaylistSelected(playlist) },
+                        modifier = Modifier.clickable { onPlaylistSelected(PlaylistEntity(id = playlist.id, name = playlist.name)) },
                         headlineContent = { Text(playlist.name) },
+                        supportingContent = { Text(subtitle) },
                         leadingContent = { Icon(Icons.Default.PlaylistAdd, contentDescription = null) }
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(com.lg.monkeymusicplayer.R.string.cancel)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

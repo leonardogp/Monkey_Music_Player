@@ -189,6 +189,7 @@
     <string name="stats_top_songs">Top Songs</string>
     <string name="stats_top_artists">Top Artists</string>
     <string name="stats_artist_songs">%d songs</string>
+    <string name="song_singular" translatable="false">1 song</string>
     <string name="stats_empty_title">No stats yet</string>
     <string name="stats_empty_body">Play some music and your listening history will appear here</string>
     <string name="stats_menu_item">My Stats</string>

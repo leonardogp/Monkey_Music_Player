@@ -82,6 +82,17 @@ interface MusicDao {
     @Query("SELECT * FROM playlists")
     fun getPlaylists(): Flow<List<PlaylistEntity>>
 
+    @Query("""
+        SELECT p.id AS id,
+               p.name AS name,
+               COUNT(ps.songId) AS songCount
+        FROM playlists p
+        LEFT JOIN playlist_songs ps
+               ON p.id = ps.playlistId
+        GROUP BY p.id, p.name
+    """)
+    fun getPlaylistsWithCount(): Flow<List<PlaylistWithCount>>
+
     @Delete
     suspend fun deletePlaylist(playlist: PlaylistEntity)
 

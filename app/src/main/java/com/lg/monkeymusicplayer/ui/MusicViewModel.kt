@@ -20,6 +20,7 @@ import com.lg.monkeymusicplayer.core.result.Result
 import com.lg.monkeymusicplayer.data.database.EqPresetEntity
 import com.lg.monkeymusicplayer.data.database.HistoryEntity
 import com.lg.monkeymusicplayer.data.database.PlaylistEntity
+import com.lg.monkeymusicplayer.data.database.PlaylistWithCount
 import com.lg.monkeymusicplayer.data.model.LyricLine
 import com.lg.monkeymusicplayer.data.model.SmartPlaylist
 import com.lg.monkeymusicplayer.data.model.Song
@@ -257,7 +258,7 @@ class MusicViewModel @Inject constructor(
         val songs: List<Song>,
         val allSongs: List<Song>,
         val history: List<HistoryEntity>,
-        val playlists: List<PlaylistEntity>,
+        val playlists: List<PlaylistWithCount>,
         val currentPlaylistSongs: List<Song>,
         val smartPlaylists: List<SmartPlaylist>
     )
@@ -266,7 +267,7 @@ class MusicViewModel @Inject constructor(
         filteredSongs,
         allSongs,
         repository.history,
-        repository.playlists,
+        repository.playlistsWithCount,
         _currentPlaylistSongs
     ) { filtered, all, history, playlists, currentPlaylist ->
         LibraryContentState(
